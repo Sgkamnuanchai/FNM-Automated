@@ -1,0 +1,18 @@
+int Counter = 0;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+	while(!Serial) {}
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if (Serial.available() > 0){
+		String message = Serial.readStringUnit('\n');
+    message = message + " " + String(Counter);
+    Counter++;
+    Serial.println(message);
+	}
+}
