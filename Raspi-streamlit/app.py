@@ -58,6 +58,7 @@ if st.button("Send to Arduino"):
             st.session_state.ser.write(f"Peak:{peak:.2f}\n".encode())
             time.sleep(0.1)
             st.session_state.ser.write(f"Min:{minv:.2f}\n".encode())
+            st.session_state.start_time = time.time()
             st.success("Sent to Arduino.")
         except Exception as e:
             st.error(f"Failed to send: {e}")
@@ -70,11 +71,24 @@ if "data" not in st.session_state:
 if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
 
+# ----------------- Chart -----------------
+df = pd.DataFrame(st.session_state.data)
+if not df.empty:
+    st.subheader("Voltage Chart")
+
+    chart = alt.Chart(df).mark_line().encode(
+        x=alt.X("Time (s)", title="Elapsed Time (s)"),
+        y=alt.Y("Voltage", title="Voltage (V)"),
+        color=alt.Color("Mode", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
+    ).properties(width=700, height=400)
+
+    st.altair_chart(chart, use_container_width=True)
+
 # ----------------- Read + Parse from Arduino -----------------
 st.subheader("Arduino Output")
 latest_display = st.empty()
 
-if st.session_state.ser:
+if st.session_state.ser and st.session_state.start_time:
     try:
         line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
         if line:
@@ -116,25 +130,12 @@ if st.session_state.ser:
     except Exception as e:
         st.error(f"Error reading serial: {e}")
 
-# ----------------- Chart -----------------
-df = pd.DataFrame(st.session_state.data)
-if not df.empty:
-    st.subheader("Voltage Chart")
-
-    chart = alt.Chart(df).mark_line().encode(
-        x=alt.X("Time (s)", title="Elapsed Time (s)"),
-        y=alt.Y("Voltage", title="Voltage (V)"),
-        color=alt.Color("Mode", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
-    ).properties(width=700, height=400)
-
-    st.altair_chart(chart, use_container_width=True)
-
-    # ----------------- CSV Export -----------------
+# ----------------- CSV Export -----------------
     csv = df.to_csv(index=False).encode()
     st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
-if st.button("Reset Data"):
+if st.button("Stop"):
     st.session_state.data = []
-    st.session_state.start_time = time.time()
+    st.session_state.start_time = None
     st.rerun()
