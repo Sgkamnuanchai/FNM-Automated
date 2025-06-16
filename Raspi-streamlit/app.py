@@ -41,15 +41,31 @@ if "ser" not in st.session_state:
         st.error(f"Serial connection failed: {e}")
 
 # ---- Send to Arduino ----
+# if st.button("Send to Arduino"):
+#     if st.session_state.ser:
+#         try:
+#             st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
+#             time.sleep(0.05)
+#             st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
+#             st.success("Sent to Arduino.")
+#             st.session_state.running = True
+#             st.session_state.start_time = time.time()
+#         except Exception as e:
+#             st.error(f"Failed to send: {e}")
+# ---- Send to Arduino ----
 if st.button("Send to Arduino"):
     if st.session_state.ser:
         try:
+            st.session_state.voltage = min_voltage
+            st.session_state.charging = True
+            st.session_state.data = []
+            st.session_state.start_time = time.time()
+            st.session_state.running = True
+            # -------------------------------------
             st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
             time.sleep(0.05)
             st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
-            st.success("Sent to Arduino.")
-            st.session_state.running = True
-            st.session_state.start_time = time.time()
+            st.success("Sent to Arduino and RESET all states.")
         except Exception as e:
             st.error(f"Failed to send: {e}")
 
@@ -113,17 +129,20 @@ st.markdown(
 
 
 # ---- Control Buttons ----
-colA, colB = st.columns(2)
-with colA:
-    if st.button("Stop"):
-        st.session_state.running = False
-with colB:
-    if st.button("Reset"):
-        st.session_state.voltage = min_voltage
-        st.session_state.charging = True
-        st.session_state.data = []
-        st.session_state.start_time = time.time()
-        st.session_state.running = False
+# colA, colB = st.columns(2)
+# with colA:
+#     if st.button("Stop"):
+#         st.session_state.running = False
+# with colB:
+#     if st.button("Reset"):
+#         st.session_state.voltage = min_voltage
+#         st.session_state.charging = True
+#         st.session_state.data = []
+#         st.session_state.start_time = time.time()
+#         st.session_state.running = False
+# ---- Control Button ----
+if st.button("Stop"):
+    st.session_state.running = False
 
 # ---- Elapsed Time ----
 if st.session_state.running:
