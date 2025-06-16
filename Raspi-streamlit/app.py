@@ -10,9 +10,11 @@ try:
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
     time.sleep(2)
     serial_ready = True
+    print("Serial connected on /dev/ttyACM0")
 except Exception as e:
     serial_ready = False
     st.error(f"Serial connection failed: {e}")
+    print(f"Serial connection failed: {e}")
 
 # ----------------- Page Setup -----------------
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
@@ -62,24 +64,25 @@ if not st.session_state.started:
         st.session_state.start_time = time.time()
         if serial_ready:
             try:
+                print(f"Sending: Peak:{peak_voltage:.2f}, Min:{min_voltage:.2f}")
                 ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
                 time.sleep(0.1)
                 ser.write(f"Min:{min_voltage:.2f}\n".encode())
             except Exception as e:
                 st.error(f"Failed to send voltages to Arduino: {e}")
+                print(f"Failed to send voltages to Arduino: {e}")
     st.stop()
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
 try:
     if serial_ready:
-        line = ser.readline().decode('utf-8', errors='ignore').strip()
-        st.write(f"Raw1 before while From Arduino: {line}")
         read_start = time.time()
         while time.time() - read_start < 2:
             line = ser.readline().decode('utf-8', errors='ignore').strip()
             if line:
-                st.write(f"Raw From Arduino: {line}")
+                st.write(f"Data From Arduino: {line}")
+                print(f"RAW: {line}")
 
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
@@ -100,6 +103,7 @@ try:
                 time.sleep(0.05)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
+    print(f"Error reading from Arduino: {e}")
 
 # ----------------- Trim & Prepare Data -----------------
 if len(st.session_state.voltage_data) > 100:
