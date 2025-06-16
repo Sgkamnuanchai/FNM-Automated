@@ -77,17 +77,14 @@ if not st.session_state.started:
 voltage = None
 direction = ""
 mode = ""
-last_line = None
 
 try:
     if serial_ready:
         read_start = time.time()
         while time.time() - read_start < 0.5:
             if ser.in_waiting > 0:
-                line = ser.readline().decode(errors="ignore").strip()
-                last_line = line
+                line = ser.readline().decode('utf-8').rstrip()
 
-                # ✅ แสดง RAW message ทันที
                 st.write(f"RAW from Arduino: {line}")
 
                 if line:
@@ -95,7 +92,6 @@ try:
                     if len(st.session_state.serial_lines) > 50:
                         st.session_state.serial_lines = st.session_state.serial_lines[-50:]
 
-                # 🧠 พยายาม parse เฉพาะค่าที่ตรง format
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
                     voltage_val = float(match.group(1))
