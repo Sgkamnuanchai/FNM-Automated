@@ -3,6 +3,7 @@ import time
 import pandas as pd
 import altair as alt
 import serial
+import re
 
 # ----------------- Serial Setup -----------------
 try:
@@ -74,6 +75,8 @@ if not st.session_state.started:
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
+direction = ""
+mode = ""
 last_line = None
 
 try:
@@ -83,19 +86,27 @@ try:
             if ser.in_waiting > 0:
                 line = ser.readline().decode().strip()
                 last_line = line
+
                 if line:
                     st.session_state.serial_lines.append(line)
                     if len(st.session_state.serial_lines) > 50:
                         st.session_state.serial_lines = st.session_state.serial_lines[-50:]
-                if line.startswith("Voltage now:"):
-                    voltage_val = line.split(":")[1].strip()
-                    voltage = float(voltage_val)
+
+                # 👇 Extract voltage/direction/mode from structured message
+                match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
+                if match:
+                    voltage_val = float(match.group(1))
+                    direction = match.group(2)
+                    mode = match.group(3)
+
+                    voltage = voltage_val  # for UI display
                     elapsed_time = int(time.time() - st.session_state.start_time)
-                    state = "Charging" if voltage < peak_voltage else "Discharging"
+
                     st.session_state.voltage_data.append({
                         "Seconds": elapsed_time,
-                        "Voltage": voltage,
-                        "State": state
+                        "Voltage": voltage_val,
+                        "Direction": direction,
+                        "Mode": mode
                     })
             else:
                 time.sleep(0.01)
@@ -112,21 +123,16 @@ if not df.empty and "Seconds" in df.columns:
 
 # ----------------- Display Voltage -----------------
 if voltage is not None:
-    color = "#2E8B57" if voltage < peak_voltage else "#F44336"
+    color = "#2E8B57" if mode == "Charging" else "#F44336"
     st.markdown(
         f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>Voltage (V): {voltage:.3f} V</span>",
         unsafe_allow_html=True
     )
+    st.write(f"Direction: {direction}")
+    st.write(f"Mode: {mode}")
 
-# ----------------- Display State & Elapsed Time -----------------
+# ----------------- Display Elapsed Time -----------------
 if voltage is not None:
-    st.write("State:", "Charging" if voltage < peak_voltage else "Discharging")
-
-    if voltage >= peak_voltage:
-        st.warning("Voltage is at peak limit!")
-    elif voltage <= min_voltage:
-        st.info("Voltage is at minimum limit.")
-
     elapsed_time = int(time.time() - st.session_state.start_time)
     if elapsed_time < 60:
         st.write(f"Elapsed Time: {elapsed_time} seconds")
@@ -142,7 +148,7 @@ if not df.empty:
     chart = alt.Chart(df).mark_line().encode(
         x=x_axis,
         y=alt.Y("Voltage", title="Voltage (V)"),
-        color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
+        color=alt.Color("Mode", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
     ).properties(width=700, height=400)
     st.altair_chart(chart, use_container_width=True)
 
