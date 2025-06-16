@@ -91,7 +91,9 @@ if len(st.session_state.voltage_data) > 100:
     st.session_state.voltage_data = st.session_state.voltage_data[-100:]
 
 df = pd.DataFrame(st.session_state.voltage_data)
-df["Minutes"] = df["Seconds"] / 60
+# df["Minutes"] = df["Seconds"] / 60
+if not df.empty and "Seconds" in df.columns:
+    df["Minutes"] = df["Seconds"] / 60
 
 # ----------------- Display Voltage -----------------
 if voltage is not None:
