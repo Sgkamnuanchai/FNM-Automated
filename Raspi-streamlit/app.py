@@ -1,13 +1,12 @@
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
-import serial
 import time
+import numpy as np
 import pandas as pd
 import altair as alt
-import re
 
-# ----------------- Page Setup -----------------
+# ------------- Setup Page -------------
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
+
 st.markdown("""
     <style>
     body {
@@ -31,108 +30,116 @@ st.markdown("""
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
-# ----------------- Auto-refresh -----------------
-st_autorefresh(interval=1000, key="serial-monitor")
+# ------------- Inputs -------------
+col1, col2 = st.columns(2)
+with col1:
+    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 2.0, 1.0, 0.05)
+with col2:
+    peak_voltage = st.number_input("Set Peak Voltage (V)", min_voltage + 0.05, 3.0, 1.8, 0.05)
 
-# ----------------- Serial Setup -----------------
-if "ser" not in st.session_state:
-    try:
-        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
-        time.sleep(2)
-        st.session_state.ser.reset_input_buffer()
-        st.success("Serial connected.")
-    except Exception as e:
-        st.session_state.ser = None
-        st.error(f"Serial connection failed: {e}")
-
-# ----------------- State Init -----------------
+# ------------- Session State -------------
+if "voltage" not in st.session_state:
+    st.session_state.voltage = 1.0
+if "charging" not in st.session_state:
+    st.session_state.charging = True
 if "data" not in st.session_state:
     st.session_state.data = []
 if "start_time" not in st.session_state:
-    st.session_state.start_time = None
+    st.session_state.start_time = time.time()
 if "running" not in st.session_state:
-    st.session_state.running = False
+    st.session_state.running = True
 
-# ----------------- Inputs -----------------
-col1, col2 = st.columns(2)
-with col1:
-    peak = st.number_input("Peak Voltage (V)", min_value=0.0, max_value=5.0, value=2.8, step=0.05)
-with col2:
-    minv = st.number_input("Minimum Voltage (V)", min_value=0.0, max_value=4.9, value=1.0, step=0.05)
-
-if st.button("Send to Arduino"):
-    if st.session_state.ser:
-        try:
-            st.session_state.ser.write(f"Peak:{peak:.2f}\n".encode())
-            time.sleep(0.1)
-            st.session_state.ser.write(f"Min:{minv:.2f}\n".encode())
-            st.success("Sent to Arduino.")
-            st.session_state.start_time = time.time()
-            st.session_state.running = True
-        except Exception as e:
-            st.error(f"Failed to send: {e}")
+# ------------- Charging/Discharging Logic -------------
+if st.session_state.running:
+    if st.session_state.charging:
+        st.session_state.voltage += np.random.uniform(0.01, 0.03)
+        if st.session_state.voltage >= peak_voltage:
+            st.session_state.voltage = peak_voltage
+            st.session_state.charging = False
     else:
-        st.error("Serial not connected.")
+        st.session_state.voltage -= np.random.uniform(0.01, 0.03)
+        if st.session_state.voltage <= min_voltage:
+            st.session_state.voltage = min_voltage
+            st.session_state.charging = True
 
-if st.button("🟥 Stop"):
-    st.session_state.running = False
+    elapsed_time = int(time.time() - st.session_state.start_time)
+    state = "Charging" if st.session_state.charging else "Discharging"
+    st.session_state.data.append({
+        "Seconds": elapsed_time,
+        "Voltage": st.session_state.voltage,
+        "State": state
+    })
 
-# ----------------- Arduino Output -----------------
-st.subheader("Arduino Output")
-latest_display = st.empty()
+# ------------- Data Prep -------------
+if len(st.session_state.data) > 100:
+    st.session_state.data = st.session_state.data[-100:]
 
-if st.session_state.ser and st.session_state.running:
-    try:
-        line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
-        if line:
-            match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
-            if match:
-                voltage = float(match.group(1))
-                direction = match.group(2)
-                mode = match.group(3)
-
-                elapsed = round(time.time() - st.session_state.start_time, 2)
-                prev = st.session_state.data[-1] if st.session_state.data else None
-
-                if prev and prev["Mode"] == "Charging" and mode == "Discharging":
-                    st.session_state.data.append({
-                        "Time (s)": elapsed - 0.1,
-                        "Voltage": prev["Voltage"],
-                        "Direction": "Peak",
-                        "Mode": "Discharging"
-                    })
-
-                st.session_state.data.append({
-                    "Time (s)": elapsed,
-                    "Voltage": voltage,
-                    "Direction": direction,
-                    "Mode": mode
-                })
-
-                color = "#2E8B57" if mode == "Charging" else "#F44336"
-
-                latest_display.markdown(f"""
-                <strong>Voltage</strong>: <span style="color:{color};">{voltage:.4f} V</span><br>
-                <strong>Direction</strong>: <span style="color:{color};">{direction}</span><br>
-                <strong>Mode</strong>: <span style="color:{color};">{mode}</span><br>
-                <strong>Elapsed Time</strong>: {elapsed:.2f} s
-                """, unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Error reading serial: {e}")
-
-# ----------------- Chart -----------------
 df = pd.DataFrame(st.session_state.data)
 if not df.empty:
-    st.subheader("Voltage Chart")
+    df["Minutes"] = df["Seconds"] / 60
+
+# ------------- Display Info -------------
+if st.session_state.charging:
+    color = "#2E8B57"
+else:
+    color = "#F44336"
+
+st.markdown(
+    f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>{icon} Voltage (V): {st.session_state.voltage:.3f} V</span>",
+    unsafe_allow_html=True
+)
+
+# ------------- Buttons -------------
+colA, colB = st.columns(2)
+with colA:
+    if st.button("Stop"):
+        st.session_state.running = False
+
+with colB:
+    if st.button("Reset"):
+        st.session_state.voltage = min_voltage
+        st.session_state.charging = True
+        st.session_state.data = []
+        st.session_state.start_time = time.time()
+        st.session_state.running = True
+
+# ------------- State Display -------------
+st.write("State:", "🔋 Charging" if st.session_state.charging else "🔻 Discharging")
+
+if st.session_state.voltage >= peak_voltage:
+    st.warning("Voltage is at peak limit!")
+elif st.session_state.voltage <= min_voltage:
+    st.info("Voltage is at minimum limit.")
+
+# ------------- Elapsed Time -------------
+if st.session_state.running:
+    elapsed_time = int(time.time() - st.session_state.start_time)
+else:
+    elapsed_time = st.session_state.data[-1]["Seconds"] if st.session_state.data else 0
+
+if elapsed_time < 60:
+    st.write(f"Elapsed Time: {elapsed_time} seconds")
+else:
+    minutes = elapsed_time // 60
+    seconds = elapsed_time % 60
+    st.write(f"Elapsed Time: {minutes} min {seconds} sec")
+
+# ------------- Plot Chart -------------
+if not df.empty:
+    x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
 
     chart = alt.Chart(df).mark_line().encode(
-        x=alt.X("Time (s)", title="Elapsed Time (s)"),
+        x=x_axis,
         y=alt.Y("Voltage", title="Voltage (V)"),
-        color=alt.Color("Mode", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
+        color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
     ).properties(width=700, height=400)
 
     st.altair_chart(chart, use_container_width=True)
 
-    # ----------------- CSV Export -----------------
+    # ------------- Export CSV -------------
     csv = df.to_csv(index=False).encode()
-    st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
+    st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
+
+# ------------- Auto Refresh -------------
+time.sleep(1)
+st.rerun()

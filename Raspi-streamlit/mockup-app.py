@@ -38,6 +38,7 @@ with col2:
     peak_voltage = st.number_input("Set Peak Voltage (V)", min_voltage + 0.05, 3.0, 1.8, 0.05)
 
 # ------------- Session State -------------
+# Ensure all session state variables are initialized
 if "voltage" not in st.session_state:
     st.session_state.voltage = 1.0
 if "charging" not in st.session_state:
@@ -49,7 +50,7 @@ if "start_time" not in st.session_state:
 if "running" not in st.session_state:
     st.session_state.running = True
 
-# ------------- Charging/Discharging Logic -------------
+# ------------- Charging/Discharging -------------
 if st.session_state.running:
     if st.session_state.charging:
         st.session_state.voltage += np.random.uniform(0.01, 0.03)
@@ -75,70 +76,58 @@ if len(st.session_state.data) > 100:
     st.session_state.data = st.session_state.data[-100:]
 
 df = pd.DataFrame(st.session_state.data)
-if not df.empty:
-    df["Minutes"] = df["Seconds"] / 60
+df["Minutes"] = df["Seconds"] / 60
 
 # ------------- Display Info -------------
+# st.metric("Voltage (V)", f"{st.session_state.voltage:.3f}")
 if st.session_state.charging:
     color = "#2E8B57"
+    icon = "🔋"
 else:
     color = "#F44336"
+    icon = "🔻"
 
 st.markdown(
     f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>{icon} Voltage (V): {st.session_state.voltage:.3f} V</span>",
     unsafe_allow_html=True
 )
 
-# ------------- Buttons -------------
-colA, colB = st.columns(2)
-with colA:
-    if st.button("Stop"):
-        st.session_state.running = False
-
-with colB:
-    if st.button("Reset"):
-        st.session_state.voltage = min_voltage
-        st.session_state.charging = True
-        st.session_state.data = []
-        st.session_state.start_time = time.time()
-        st.session_state.running = True
-
-# ------------- State Display -------------
-st.write("State:", "Charging" if st.session_state.charging else "Discharging")
+# ------------- Reset Button -------------
+if st.button("🔄 Reset"):
+    st.session_state.voltage = min_voltage
+    st.session_state.charging = True
+    st.session_state.data = []
+    st.session_state.start_time = time.time()
+    st.session_state.running = True
+    
+st.write("State:", "🔋 Charging" if st.session_state.charging else "🔻 Discharging")
 
 if st.session_state.voltage >= peak_voltage:
-    st.warning("Voltage is at peak limit!")
+    st.warning("⚠️ Voltage is at peak limit!")
 elif st.session_state.voltage <= min_voltage:
-    st.info("Voltage is at minimum limit.")
-
-# ------------- Elapsed Time -------------
-if st.session_state.running:
-    elapsed_time = int(time.time() - st.session_state.start_time)
-else:
-    elapsed_time = st.session_state.data[-1]["Seconds"] if st.session_state.data else 0
+    st.info("ℹ️ Voltage is at minimum limit.")
 
 if elapsed_time < 60:
-    st.write(f"Elapsed Time: {elapsed_time} seconds")
+    st.write(f"⏱️ Elapsed Time: {elapsed_time} seconds")
 else:
     minutes = elapsed_time // 60
     seconds = elapsed_time % 60
-    st.write(f"Elapsed Time: {minutes} min {seconds} sec")
-
+    st.write(f"⏱️ Elapsed Time: {minutes} min {seconds} sec")
+    
 # ------------- Plot Chart -------------
-if not df.empty:
-    x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
+x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
 
-    chart = alt.Chart(df).mark_line().encode(
-        x=x_axis,
-        y=alt.Y("Voltage", title="Voltage (V)"),
-        color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
-    ).properties(width=700, height=400)
+chart = alt.Chart(df).mark_line().encode(
+    x=x_axis,
+    y=alt.Y("Voltage", title="Voltage (V)"),
+    color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
+).properties(width=700, height=400)
 
-    st.altair_chart(chart, use_container_width=True)
+st.altair_chart(chart, use_container_width=True)
 
-    # ------------- Export CSV -------------
-    csv = df.to_csv(index=False).encode()
-    st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
+# ------------- Export CSV -------------
+csv = df.to_csv(index=False).encode()
+st.download_button("📥 Download Data as CSV", csv, "voltage_log.csv", "text/csv")
 
 # ------------- Auto Refresh -------------
 time.sleep(1)
