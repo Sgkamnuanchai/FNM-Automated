@@ -6,7 +6,7 @@ import pandas as pd
 import altair as alt
 import re
 
-# ----------------- Refresh every 1s -----------------
+# ----------------- Auto-refresh every 1s -----------------
 st_autorefresh(interval=1000, key="serial-monitor")
 
 # ----------------- Serial Setup -----------------
@@ -20,8 +20,8 @@ if "ser" not in st.session_state:
         st.session_state.ser = None
         st.error(f"Serial connection failed: {e}")
 
-# ----------------- UI Input -----------------
-st.title("Real-time Dashboard")
+# ----------------- UI -----------------
+st.title("⚡ Real-time Arduino Dashboard")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -41,13 +41,13 @@ if st.button("Send to Arduino"):
     else:
         st.error("Serial not connected.")
 
-# ----------------- Storage -----------------
+# ----------------- State Init -----------------
 if "data" not in st.session_state:
     st.session_state.data = []
 if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
 
-# ----------------- Serial Reading + Parsing -----------------
+# ----------------- Read + Parse from Arduino -----------------
 st.subheader("Latest Arduino Output")
 latest_display = st.empty()
 
@@ -64,6 +64,18 @@ if st.session_state.ser:
                 mode = match.group(3)
 
                 elapsed_time = round(time.time() - st.session_state.start_time, 2)
+                previous_data = st.session_state.data[-1] if st.session_state.data else None
+
+                # ✨ INSERT PEAK POINT if just switched to Discharging
+                if previous_data and previous_data["Mode"] == "Charging" and mode == "Discharging":
+                    st.session_state.data.append({
+                        "Time (s)": elapsed_time - 0.1,
+                        "Voltage": previous_data["Voltage"],
+                        "Direction": "Peak",
+                        "Mode": "Discharging"
+                    })
+
+                # Add current point
                 st.session_state.data.append({
                     "Time (s)": elapsed_time,
                     "Voltage": voltage,
@@ -80,7 +92,7 @@ if st.session_state.ser:
     except Exception as e:
         st.error(f"Error reading serial: {e}")
 
-# ----------------- DataFrame and Chart -----------------
+# ----------------- Chart -----------------
 df = pd.DataFrame(st.session_state.data)
 if not df.empty:
     st.subheader("Voltage Chart")
@@ -93,9 +105,9 @@ if not df.empty:
 
     st.altair_chart(chart, use_container_width=True)
 
-    # ----------------- Download -----------------
+    # ----------------- CSV Export -----------------
     csv = df.to_csv(index=False).encode()
-    st.download_button("Download CSV", csv, "arduino_voltage_log.csv", "text/csv")
+    st.download_button("⬇Download CSV", csv, "arduino_voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
 if st.button("Reset Data"):
