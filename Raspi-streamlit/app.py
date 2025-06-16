@@ -1,12 +1,12 @@
 import streamlit as st
 import time
-import numpy as np
 import pandas as pd
 import altair as alt
+import serial
+import re
 
-# ------------- Setup Page -------------
+# ----------- Page Config -----------
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
-
 st.markdown("""
     <style>
     body {
@@ -30,14 +30,40 @@ st.markdown("""
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
-# ------------- Inputs -------------
+# ----------- Inputs -----------
 col1, col2 = st.columns(2)
 with col1:
     min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 2.0, 1.0, 0.05)
 with col2:
     peak_voltage = st.number_input("Set Peak Voltage (V)", min_voltage + 0.05, 3.0, 1.8, 0.05)
 
-# ------------- Session State -------------
+# ----------- Serial Setup -----------
+if "ser" not in st.session_state:
+    try:
+        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
+        time.sleep(2)
+        st.session_state.ser.reset_input_buffer()
+        st.success("Serial connected.")
+    except Exception as e:
+        st.session_state.ser = None
+        st.error(f"Serial connection failed: {e}")
+
+# ----------- Send to Arduino -----------
+if st.button("Send to Arduino"):
+    if st.session_state.ser:
+        try:
+            st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
+            time.sleep(0.1)
+            st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
+            st.success("Sent to Arduino.")
+            st.session_state.running = True
+            st.session_state.start_time = time.time()
+        except Exception as e:
+            st.error(f"Failed to send: {e}")
+    else:
+        st.error("Serial not connected.")
+
+# ----------- Init Session State -----------
 if "voltage" not in st.session_state:
     st.session_state.voltage = 1.0
 if "charging" not in st.session_state:
@@ -47,38 +73,31 @@ if "data" not in st.session_state:
 if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
 if "running" not in st.session_state:
-    st.session_state.running = True
+    st.session_state.running = False
 
-# ------------- Charging/Discharging Logic -------------
-if st.session_state.running:
-    if st.session_state.charging:
-        st.session_state.voltage += np.random.uniform(0.01, 0.03)
-        if st.session_state.voltage >= peak_voltage:
-            st.session_state.voltage = peak_voltage
-            st.session_state.charging = False
-    else:
-        st.session_state.voltage -= np.random.uniform(0.01, 0.03)
-        if st.session_state.voltage <= min_voltage:
-            st.session_state.voltage = min_voltage
-            st.session_state.charging = True
+# ----------- Serial Read & Store -----------
+if st.session_state.running and st.session_state.ser:
+    try:
+        line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
+        if line:
+            match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
+            if match:
+                voltage = float(match.group(1))
+                mode = match.group(3)
 
-    elapsed_time = int(time.time() - st.session_state.start_time)
-    state = "Charging" if st.session_state.charging else "Discharging"
-    st.session_state.data.append({
-        "Seconds": elapsed_time,
-        "Voltage": st.session_state.voltage,
-        "State": state
-    })
+                st.session_state.voltage = voltage
+                st.session_state.charging = (mode == "Charging")
 
-# ------------- Data Prep -------------
-if len(st.session_state.data) > 100:
-    st.session_state.data = st.session_state.data[-100:]
+                elapsed = int(time.time() - st.session_state.start_time)
+                st.session_state.data.append({
+                    "Seconds": elapsed,
+                    "Voltage": voltage,
+                    "State": mode
+                })
+    except Exception as e:
+        st.error(f"Error reading serial: {e}")
 
-df = pd.DataFrame(st.session_state.data)
-if not df.empty:
-    df["Minutes"] = df["Seconds"] / 60
-
-# ------------- Display Info -------------
+# ----------- Display Latest Info -----------
 if st.session_state.charging:
     color = "#2E8B57"
 else:
@@ -89,29 +108,20 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ------------- Buttons -------------
+# ----------- Buttons -----------
 colA, colB = st.columns(2)
 with colA:
     if st.button("Stop"):
         st.session_state.running = False
-
 with colB:
     if st.button("Reset"):
         st.session_state.voltage = min_voltage
         st.session_state.charging = True
         st.session_state.data = []
         st.session_state.start_time = time.time()
-        st.session_state.running = True
+        st.session_state.running = False
 
-# ------------- State Display -------------
-st.write("State:", "🔋 Charging" if st.session_state.charging else "🔻 Discharging")
-
-if st.session_state.voltage >= peak_voltage:
-    st.warning("Voltage is at peak limit!")
-elif st.session_state.voltage <= min_voltage:
-    st.info("Voltage is at minimum limit.")
-
-# ------------- Elapsed Time -------------
+# ----------- Elapsed Time Display -----------
 if st.session_state.running:
     elapsed_time = int(time.time() - st.session_state.start_time)
 else:
@@ -120,12 +130,13 @@ else:
 if elapsed_time < 60:
     st.write(f"Elapsed Time: {elapsed_time} seconds")
 else:
-    minutes = elapsed_time // 60
-    seconds = elapsed_time % 60
-    st.write(f"Elapsed Time: {minutes} min {seconds} sec")
+    st.write(f"Elapsed Time: {elapsed_time // 60} min {elapsed_time % 60} sec")
 
-# ------------- Plot Chart -------------
+# ----------- Chart -----------
+df = pd.DataFrame(st.session_state.data)
 if not df.empty:
+    df["Minutes"] = df["Seconds"] / 60
+
     x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
 
     chart = alt.Chart(df).mark_line().encode(
@@ -136,10 +147,9 @@ if not df.empty:
 
     st.altair_chart(chart, use_container_width=True)
 
-    # ------------- Export CSV -------------
     csv = df.to_csv(index=False).encode()
-    st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
+    st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
 
-# ------------- Auto Refresh -------------
+# ----------- Auto Refresh -----------
 time.sleep(1)
 st.rerun()
