@@ -57,7 +57,7 @@ if "started" not in st.session_state:
 
 # ----------------- START Button -----------------
 if not st.session_state.started:
-    if st.button("Start"):
+    if st.button("Start Simulation"):
         st.session_state.started = True
         st.session_state.start_time = time.time()
         if serial_ready:
@@ -72,12 +72,15 @@ if not st.session_state.started:
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
+last_line = None
+
 try:
     if serial_ready:
         read_start = time.time()
         while time.time() - read_start < 0.5:
             if ser.in_waiting > 0:
                 line = ser.readline().decode().strip()
+                last_line = line  # debug
                 if line.startswith("Voltage now:"):
                     voltage_val = line.split(":")[1].strip()
                     voltage = float(voltage_val)
@@ -92,6 +95,11 @@ try:
                 time.sleep(0.01)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
+
+# ----------------- Debug Output -----------------
+if last_line:
+    st.markdown("**Latest Serial Line:**")
+    st.code(last_line)
 
 # ----------------- Trim & Prepare Data -----------------
 if len(st.session_state.voltage_data) > 100:
@@ -128,6 +136,7 @@ if voltage is not None:
 
 # ----------------- Plot Voltage Chart -----------------
 if not df.empty:
+    st.markdown("---")
     x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
     chart = alt.Chart(df).mark_line().encode(
         x=x_axis,
@@ -142,10 +151,11 @@ if not df.empty:
     st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
-if st.button("Reset"):
+if not df.empty and st.button("Reset"):
     st.session_state.voltage_data = []
     st.session_state.start_time = time.time()
 
 # ----------------- Refresh -----------------
-time.sleep(1)
-st.rerun()
+if voltage is not None:
+    time.sleep(1)
+    st.rerun()
