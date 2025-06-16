@@ -84,22 +84,25 @@ try:
         read_start = time.time()
         while time.time() - read_start < 0.5:
             if ser.in_waiting > 0:
-                line = ser.readline().decode().strip()
+                line = ser.readline().decode(errors="ignore").strip()
                 last_line = line
+
+                # ✅ แสดง RAW message ทันที
+                st.write(f"RAW from Arduino: {line}")
 
                 if line:
                     st.session_state.serial_lines.append(line)
                     if len(st.session_state.serial_lines) > 50:
                         st.session_state.serial_lines = st.session_state.serial_lines[-50:]
 
-                # 👇 Extract voltage/direction/mode from structured message
+                # 🧠 พยายาม parse เฉพาะค่าที่ตรง format
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
                     voltage_val = float(match.group(1))
                     direction = match.group(2)
                     mode = match.group(3)
 
-                    voltage = voltage_val  # for UI display
+                    voltage = voltage_val  # for UI
                     elapsed_time = int(time.time() - st.session_state.start_time)
 
                     st.session_state.voltage_data.append({
