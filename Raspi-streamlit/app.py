@@ -12,11 +12,11 @@ if "ser" not in st.session_state:
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
         serial_ready = True
-        print("Serial opened in session_state")
+        print("✅ Serial opened in session_state")
     except Exception as e:
         serial_ready = False
         st.error(f"Serial connection failed: {e}")
-        print(f"Serial connection failed: {e}")
+        print(f"❌ Serial connection failed: {e}")
 else:
     serial_ready = True
     ser = st.session_state.ser
@@ -82,12 +82,12 @@ if not st.session_state.started:
 voltage = None
 try:
     if serial_ready:
-        read_start = time.time()
-        while time.time() - read_start < 2:
+        print("🔍 Listening to Arduino output...")
+        for _ in range(20):  # Try reading 20 times in short bursts
             line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
             if line:
-                st.write(f"Data From Arduino: {line}")
-                print(f"Data RAW: {line}")
+                st.write(f"📟 From Arduino: {line}")
+                print(f"📟 RAW: {line}")
 
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
@@ -104,8 +104,7 @@ try:
                         "Direction": direction,
                         "Mode": mode
                     })
-            else:
-                time.sleep(0.05)
+            time.sleep(0.1)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
     print(f"Error reading from Arduino: {e}")
