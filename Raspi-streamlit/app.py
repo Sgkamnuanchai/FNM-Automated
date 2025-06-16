@@ -7,7 +7,7 @@ import re
 from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
-st_autorefresh(interval=200, key="autorefresh")
+st_autorefresh(interval=400, key="autorefresh")
 
 
 # ---- UI & Style ----
@@ -87,11 +87,30 @@ if st.session_state.running and st.session_state.ser:
         st.error(f"Error reading serial: {e}")
 
 # ---- Display Voltage ----
+# color = "#2E8B57" if st.session_state.charging else "#F44336"
+# st.markdown(
+#     f"<span style='font-size: 35px; color: {color}; font-weight: 600;'> Voltage (V): {st.session_state.voltage:.3f} V</span>",
+#     unsafe_allow_html=True
+# )
+# ---- Display Voltage + State ----
 color = "#2E8B57" if st.session_state.charging else "#F44336"
+state_text = "Charging" if st.session_state.charging else "Discharging"
+state_color = "#0099FF" if st.session_state.charging else "#F44336"
+
 st.markdown(
-    f"<span style='font-size: 35px; color: {color}; font-weight: 600;'> Voltage (V): {st.session_state.voltage:.3f} V</span>",
+    f"""
+    <div style='display:flex;align-items:center;gap:20px;'>
+        <span style='font-size: 35px; color: {color}; font-weight: 600;'>
+            Voltage (V): {st.session_state.voltage:.3f} V
+        </span>
+        <span style='font-size: 28px; color: {state_color}; font-weight: 600;'>
+            [{state_text}]
+        </span>
+    </div>
+    """,
     unsafe_allow_html=True
 )
+
 
 # ---- Control Buttons ----
 colA, colB = st.columns(2)
