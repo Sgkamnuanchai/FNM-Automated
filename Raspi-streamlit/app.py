@@ -74,12 +74,12 @@ voltage = None
 try:
     if serial_ready:
         line = ser.readline().decode('utf-8', errors='ignore').strip()
-        st.write(f"Raw From Arduino: {line}")
+        st.write(f"Raw1 before while From Arduino: {line}")
         read_start = time.time()
         while time.time() - read_start < 2:
-            # line = ser.readline().decode('utf-8', errors='ignore').strip()
-            # if line:
-            #     st.write(f"Raw From Arduino: {line}")
+            line = ser.readline().decode('utf-8', errors='ignore').strip()
+            if line:
+                st.write(f"Raw From Arduino: {line}")
 
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
