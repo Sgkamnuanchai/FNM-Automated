@@ -8,6 +8,7 @@ import serial
 try:
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
     time.sleep(2)
+    ser.reset_input_buffer()
     serial_ready = True
 except Exception as e:
     serial_ready = False
@@ -56,34 +57,39 @@ if "started" not in st.session_state:
 
 # ----------------- START Button -----------------
 if not st.session_state.started:
-    if st.button("Start Simulation"):
+    if st.button("Start"):
         st.session_state.started = True
         st.session_state.start_time = time.time()
         if serial_ready:
             try:
-                print(f"Sending: {peak_voltage:.2f} and {min_voltage:.2f}")
+                ser.reset_input_buffer()
                 ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
                 time.sleep(0.1)
                 ser.write(f"Min:{min_voltage:.2f}\n".encode())
             except Exception as e:
                 st.error(f"Failed to send voltages to Arduino: {e}")
-    st.stop() 
+    st.stop()
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
 try:
-    if serial_ready and ser.in_waiting:
-        line = ser.readline().decode().strip()
-        if line.startswith("Voltage now:"):
-            voltage_val = line.split(":")[1].strip()
-            voltage = float(voltage_val)
-            elapsed_time = int(time.time() - st.session_state.start_time)
-            state = "Charging" if voltage < peak_voltage else "Discharging"
-            st.session_state.voltage_data.append({
-                "Seconds": elapsed_time,
-                "Voltage": voltage,
-                "State": state
-            })
+    if serial_ready:
+        read_start = time.time()
+        while time.time() - read_start < 0.5:
+            if ser.in_waiting > 0:
+                line = ser.readline().decode().strip()
+                if line.startswith("Voltage now:"):
+                    voltage_val = line.split(":")[1].strip()
+                    voltage = float(voltage_val)
+                    elapsed_time = int(time.time() - st.session_state.start_time)
+                    state = "Charging" if voltage < peak_voltage else "Discharging"
+                    st.session_state.voltage_data.append({
+                        "Seconds": elapsed_time,
+                        "Voltage": voltage,
+                        "State": state
+                    })
+            else:
+                time.sleep(0.01)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
 
@@ -92,7 +98,6 @@ if len(st.session_state.voltage_data) > 100:
     st.session_state.voltage_data = st.session_state.voltage_data[-100:]
 
 df = pd.DataFrame(st.session_state.voltage_data)
-# df["Minutes"] = df["Seconds"] / 60
 if not df.empty and "Seconds" in df.columns:
     df["Minutes"] = df["Seconds"] / 60
 
