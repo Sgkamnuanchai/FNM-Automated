@@ -31,8 +31,8 @@ st.markdown("""
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
-# ----------------- Auto-refresh every 0.5s -----------------
-st_autorefresh(interval=800, key="serial-monitor")
+# ----------------- Auto-refresh every 1s -----------------
+st_autorefresh(interval=1000, key="serial-monitor")
 
 # ----------------- Serial Setup -----------------
 if "ser" not in st.session_state:
@@ -52,7 +52,7 @@ with col1:
 with col2:
     minv = st.number_input("Minimum Voltage (V)", min_value=0.0, max_value=4.9, value=1.0, step=0.05)
 
-if st.button("📤 Send to Arduino"):
+if st.button("Send to Arduino"):
     if st.session_state.ser:
         try:
             st.session_state.ser.write(f"Peak:{peak:.2f}\n".encode())
@@ -71,7 +71,7 @@ if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
 
 # ----------------- Read + Parse from Arduino -----------------
-st.subheader("Latest Arduino Output")
+st.subheader("Arduino Output")
 latest_display = st.empty()
 
 if st.session_state.ser:
