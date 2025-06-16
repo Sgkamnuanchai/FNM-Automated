@@ -107,11 +107,12 @@ if st.session_state.ser:
                 color = "#2E8B57" if mode == "Charging" else "#F44336"
 
                 latest_display.markdown(f"""
-                **Voltage**: `<span style="color:{color};">{voltage:.4f} V</span>`  
-                **Direction**: `<span style="color:{color};">{direction}</span>`  
-                **Mode**: `<span style="color:{color};">{mode}</span>`  
-                **Elapsed Time**: `{elapsed:.2f} s`
+                <strong>Voltage</strong>: <span style="color:{color};">{voltage:.4f} V</span><br>
+                <strong>Direction</strong>: <span style="color:{color};">{direction}</span><br>
+                <strong>Mode</strong>: <span style="color:{color};">{mode}</span><br>
+                <strong>Elapsed Time</strong>: {elapsed:.2f} s
                 """, unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"Error reading serial: {e}")
 
