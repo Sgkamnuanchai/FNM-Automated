@@ -31,7 +31,7 @@ st.markdown("""
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
-# ----------------- Auto-refresh every 1s -----------------
+# ----------------- Auto-refresh -----------------
 st_autorefresh(interval=1000, key="serial-monitor")
 
 # ----------------- Serial Setup -----------------
@@ -49,18 +49,17 @@ if "ser" not in st.session_state:
 if "data" not in st.session_state:
     st.session_state.data = []
 if "start_time" not in st.session_state:
-    st.session_state.start_time = time.time()
-if "paused" not in st.session_state:
-    st.session_state.paused = False
+    st.session_state.start_time = None
+if "running" not in st.session_state:
+    st.session_state.running = False
 
-# ----------------- Input UI -----------------
+# ----------------- Inputs -----------------
 col1, col2 = st.columns(2)
 with col1:
     peak = st.number_input("Peak Voltage (V)", min_value=0.0, max_value=5.0, value=2.8, step=0.05)
 with col2:
     minv = st.number_input("Minimum Voltage (V)", min_value=0.0, max_value=4.9, value=1.0, step=0.05)
 
-# ----------------- Send Command -----------------
 if st.button("Send to Arduino"):
     if st.session_state.ser:
         try:
@@ -76,20 +75,18 @@ if st.button("Send to Arduino"):
 # ----------------- Control Buttons -----------------
 colA, colB = st.columns(2)
 with colA:
-    if not st.session_state.paused:
-        if st.button("🟥 Stop"):
-            st.session_state.paused = True
+    if st.button("🟢 Start"):
+        st.session_state.running = True
+        st.session_state.start_time = time.time()
 with colB:
-    if st.session_state.paused:
-        if st.button("▶ Resume"):
-            st.session_state.paused = False
-            st.session_state.start_time = time.time()
+    if st.button("🟥 Stop"):
+        st.session_state.running = False
 
-# ----------------- Read Serial -----------------
+# ----------------- Arduino Output -----------------
 st.subheader("Arduino Output")
 latest_display = st.empty()
 
-if st.session_state.ser and not st.session_state.paused:
+if st.session_state.ser and st.session_state.running:
     try:
         line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
         if line:
@@ -125,7 +122,6 @@ if st.session_state.ser and not st.session_state.paused:
                 <strong>Mode</strong>: <span style="color:{color};">{mode}</span><br>
                 <strong>Elapsed Time</strong>: {elapsed:.2f} s
                 """, unsafe_allow_html=True)
-
     except Exception as e:
         st.error(f"Error reading serial: {e}")
 
