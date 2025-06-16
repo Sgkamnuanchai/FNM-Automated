@@ -85,7 +85,7 @@ else:
     color = "#F44336"
 
 st.markdown(
-    f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>{icon} Voltage (V): {st.session_state.voltage:.3f} V</span>",
+    f"<span style='font-size: 35px; color: {color}; font-weight: 600;'> Voltage (V): {st.session_state.voltage:.3f} V</span>",
     unsafe_allow_html=True
 )
 
