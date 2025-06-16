@@ -1,20 +1,24 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import serial
 import time
 
-# ---------- Serial Setup ----------
+# ----------------- Refresh every 1s -----------------
+st_autorefresh(interval=1000, key="serial-monitor")
+
+# ----------------- Serial Setup -----------------
 if "ser" not in st.session_state:
     try:
         st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
-        st.success("Serial connection established.")
+        st.success("? Serial connected.")
     except Exception as e:
         st.session_state.ser = None
-        st.error(f"Failed to open serial: {e}")
+        st.error(f"? Serial connection failed: {e}")
 
-# ---------- UI ----------
-st.title("? Simple Arduino Serial Monitor")
+# ----------------- UI Inputs -----------------
+st.title("? Real-time Arduino Monitor")
 
 peak = st.number_input("Peak Voltage (V)", min_value=0.0, max_value=5.0, value=2.5, step=0.1)
 minv = st.number_input("Minimum Voltage (V)", min_value=0.0, max_value=4.9, value=1.0, step=0.1)
@@ -29,17 +33,17 @@ if st.button("Send to Arduino"):
         except Exception as e:
             st.error(f"? Failed to send: {e}")
     else:
-        st.error("Serial not connected.")
+        st.error("? Serial not connected.")
 
-# ---------- Serial Output Display ----------
-st.subheader("Arduino Output")
+# ----------------- Read Serial Output -----------------
+st.subheader("? Arduino Output")
 output_area = st.empty()
 
 if st.session_state.ser:
     try:
         lines = []
-        start_time = time.time()
-        while time.time() - start_time < 2:  # Read for 2 seconds only
+        start = time.time()
+        while time.time() - start < 0.5:
             if st.session_state.ser.in_waiting > 0:
                 line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
                 if line:
@@ -49,4 +53,4 @@ if st.session_state.ser:
         else:
             output_area.info("No data received from Arduino.")
     except Exception as e:
-        output_area.error(f"Error reading: {e}")
+        output_area.error(f"? Error reading serial: {e}")
