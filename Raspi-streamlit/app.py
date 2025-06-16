@@ -32,7 +32,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------- Auto-refresh every 0.5s -----------------
-st_autorefresh(interval=500, key="serial-monitor")
+st_autorefresh(interval=800, key="serial-monitor")
 
 # ----------------- Serial Setup -----------------
 if "ser" not in st.session_state:
@@ -40,10 +40,10 @@ if "ser" not in st.session_state:
         st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
-        st.success("✅ Serial connected.")
+        st.success("Serial connected.")
     except Exception as e:
         st.session_state.ser = None
-        st.error(f"❌ Serial connection failed: {e}")
+        st.error(f"Serial connection failed: {e}")
 
 # ----------------- UI Inputs -----------------
 col1, col2 = st.columns(2)
@@ -58,11 +58,11 @@ if st.button("📤 Send to Arduino"):
             st.session_state.ser.write(f"Peak:{peak:.2f}\n".encode())
             time.sleep(0.1)
             st.session_state.ser.write(f"Min:{minv:.2f}\n".encode())
-            st.success("✅ Sent to Arduino.")
+            st.success("Sent to Arduino.")
         except Exception as e:
-            st.error(f"❌ Failed to send: {e}")
+            st.error(f"Failed to send: {e}")
     else:
-        st.error("❌ Serial not connected.")
+        st.error("Serial not connected.")
 
 # ----------------- State Init -----------------
 if "data" not in st.session_state:
@@ -71,7 +71,7 @@ if "start_time" not in st.session_state:
     st.session_state.start_time = time.time()
 
 # ----------------- Read + Parse from Arduino -----------------
-st.subheader("🔍 Latest Arduino Output")
+st.subheader("Latest Arduino Output")
 latest_display = st.empty()
 
 if st.session_state.ser:
@@ -110,12 +110,12 @@ if st.session_state.ser:
                     **Elapsed Time**: `{elapsed:.2f} s`
                 """)
     except Exception as e:
-        st.error(f"❌ Error reading serial: {e}")
+        st.error(f"Error reading serial: {e}")
 
 # ----------------- Chart -----------------
 df = pd.DataFrame(st.session_state.data)
 if not df.empty:
-    st.subheader("📈 Voltage Chart")
+    st.subheader("Voltage Chart")
 
     chart = alt.Chart(df).mark_line().encode(
         x=alt.X("Time (s)", title="Elapsed Time (s)"),
@@ -127,10 +127,10 @@ if not df.empty:
 
     # ----------------- CSV Export -----------------
     csv = df.to_csv(index=False).encode()
-    st.download_button("⬇ Download CSV", csv, "voltage_log.csv", "text/csv")
+    st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
-if st.button("🔄 Reset Data"):
+if st.button("Reset Data"):
     st.session_state.data = []
     st.session_state.start_time = time.time()
     st.rerun()
