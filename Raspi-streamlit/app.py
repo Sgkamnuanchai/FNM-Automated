@@ -6,15 +6,20 @@ import serial
 import re
 
 # ----------------- Serial Setup -----------------
-try:
-    ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
-    time.sleep(2)
+if "ser" not in st.session_state:
+    try:
+        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
+        time.sleep(2)
+        st.session_state.ser.reset_input_buffer()
+        serial_ready = True
+        print("Serial opened in session_state")
+    except Exception as e:
+        serial_ready = False
+        st.error(f"Serial connection failed: {e}")
+        print(f"Serial connection failed: {e}")
+else:
     serial_ready = True
-    print("Serial connected on /dev/ttyACM0")
-except Exception as e:
-    serial_ready = False
-    st.error(f"Serial connection failed: {e}")
-    print(f"Serial connection failed: {e}")
+    ser = st.session_state.ser
 
 # ----------------- Page Setup -----------------
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
@@ -65,9 +70,9 @@ if not st.session_state.started:
         if serial_ready:
             try:
                 print(f"Sending: Peak:{peak_voltage:.2f}, Min:{min_voltage:.2f}")
-                ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
+                st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
                 time.sleep(0.1)
-                ser.write(f"Min:{min_voltage:.2f}\n".encode())
+                st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
             except Exception as e:
                 st.error(f"Failed to send voltages to Arduino: {e}")
                 print(f"Failed to send voltages to Arduino: {e}")
@@ -79,10 +84,10 @@ try:
     if serial_ready:
         read_start = time.time()
         while time.time() - read_start < 2:
-            line = ser.readline().decode('utf-8', errors='ignore').strip()
+            line = st.session_state.ser.readline().decode('utf-8', errors='ignore').strip()
             if line:
                 st.write(f"Data From Arduino: {line}")
-                print(f"RAW: {line}")
+                print(f"Data RAW: {line}")
 
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
