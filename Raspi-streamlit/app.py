@@ -61,7 +61,7 @@ if not st.session_state.started:
         st.session_state.start_time = time.time()
         if serial_ready:
             try:
-                print(f"Sending: {peak_voltage.strip()} and {min_voltage.strip()}")
+                print(f"Sending: {peak_voltage:.2f} and {min_voltage:.2f}")
                 ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
                 time.sleep(0.1)
                 ser.write(f"Min:{min_voltage:.2f}\n".encode())
