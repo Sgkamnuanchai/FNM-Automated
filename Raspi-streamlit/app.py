@@ -54,6 +54,8 @@ if "start_time" not in st.session_state:
     st.session_state.start_time = None
 if "started" not in st.session_state:
     st.session_state.started = False
+if "serial_lines" not in st.session_state:
+    st.session_state.serial_lines = []
 
 # ----------------- START Button -----------------
 if not st.session_state.started:
@@ -80,7 +82,11 @@ try:
         while time.time() - read_start < 0.5:
             if ser.in_waiting > 0:
                 line = ser.readline().decode().strip()
-                last_line = line  # debug
+                last_line = line
+                if line:
+                    st.session_state.serial_lines.append(line)
+                    if len(st.session_state.serial_lines) > 50:
+                        st.session_state.serial_lines = st.session_state.serial_lines[-50:]
                 if line.startswith("Voltage now:"):
                     voltage_val = line.split(":")[1].strip()
                     voltage = float(voltage_val)
@@ -95,11 +101,6 @@ try:
                 time.sleep(0.01)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
-
-# ----------------- Debug Output -----------------
-if last_line:
-    st.markdown("**Latest Serial Line:**")
-    st.code(last_line)
 
 # ----------------- Trim & Prepare Data -----------------
 if len(st.session_state.voltage_data) > 100:
@@ -154,6 +155,14 @@ if not df.empty:
 if not df.empty and st.button("Reset"):
     st.session_state.voltage_data = []
     st.session_state.start_time = time.time()
+    st.session_state.serial_lines = []
+
+# ----------------- Show Raw Serial Messages -----------------
+if st.session_state.serial_lines:
+    st.markdown("---")
+    st.markdown("### Raw Serial Output (from Arduino)")
+    for msg in reversed(st.session_state.serial_lines):
+        st.text(msg)
 
 # ----------------- Refresh -----------------
 if voltage is not None:
