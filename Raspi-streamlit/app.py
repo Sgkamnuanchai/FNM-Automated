@@ -84,7 +84,7 @@ try:
         while time.time() - read_start < 0.5:
             if ser.in_waiting > 0:
                 line = ser.readline().decode('utf-8').rstrip()
-
+                st.write("==============test Raw=============")
                 st.write(f"RAW from Arduino: {line}")
 
                 if line:
