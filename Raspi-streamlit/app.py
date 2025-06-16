@@ -42,31 +42,40 @@ st.markdown("""
 # ----------------- Inputs -----------------
 col1, col2 = st.columns(2)
 with col1:
-    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 2.0, 1.0, 0.05)
+    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 4.9, 1.0, 0.05)
 with col2:
-    peak_voltage = st.number_input("Set Peak Voltage (V)", min_voltage + 0.05, 3.0, 1.8, 0.05)
+    peak_voltage = st.number_input("Set Peak Voltage (V)", min_voltage + 0.05, 5.0, 1.8, 0.05)
 
 # ----------------- Session State -----------------
 if "voltage_data" not in st.session_state:
     st.session_state.voltage_data = []
 if "start_time" not in st.session_state:
-    st.session_state.start_time = time.time()
+    st.session_state.start_time = None
+if "started" not in st.session_state:
+    st.session_state.started = False
 
-# ----------------- Send Voltage Ranges to Arduino -----------------
-if serial_ready:
-    try:
-        ser.write(f"PK:{peak_voltage:.2f}\n".encode())
-        ser.write(f"MN:{min_voltage:.2f}\n".encode())
-    except Exception as e:
-        st.error(f"Failed to send voltages to Arduino: {e}")
+# ----------------- START Button -----------------
+if not st.session_state.started:
+    if st.button("Start Simulation"):
+        st.session_state.started = True
+        st.session_state.start_time = time.time()
+        if serial_ready:
+            try:
+                ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
+                time.sleep(0.1)
+                ser.write(f"Min:{min_voltage:.2f}\n".encode())
+            except Exception as e:
+                st.error(f"Failed to send voltages to Arduino: {e}")
+    st.stop() 
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
 try:
     if serial_ready and ser.in_waiting:
         line = ser.readline().decode().strip()
-        if line.startswith("V:"):
-            voltage = float(line.split(":")[1])
+        if line.startswith("Voltage now:"):
+            voltage_val = line.split(":")[1].strip()
+            voltage = float(voltage_val)
             elapsed_time = int(time.time() - st.session_state.start_time)
             state = "Charging" if voltage < peak_voltage else "Discharging"
             st.session_state.voltage_data.append({
@@ -87,28 +96,27 @@ df["Minutes"] = df["Seconds"] / 60
 # ----------------- Display Voltage -----------------
 if voltage is not None:
     color = "#2E8B57" if voltage < peak_voltage else "#F44336"
-    icon = "🔋" if voltage < peak_voltage else "🔻"
     st.markdown(
-        f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>{icon} Voltage (V): {voltage:.3f} V</span>",
+        f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>Voltage (V): {voltage:.3f} V</span>",
         unsafe_allow_html=True
     )
 
 # ----------------- Display State & Elapsed Time -----------------
 if voltage is not None:
-    st.write("State:", "🔋 Charging" if voltage < peak_voltage else "🔻 Discharging")
+    st.write("State:", "Charging" if voltage < peak_voltage else "Discharging")
 
     if voltage >= peak_voltage:
-        st.warning("⚠️ Voltage is at peak limit!")
+        st.warning("Voltage is at peak limit!")
     elif voltage <= min_voltage:
-        st.info("ℹ️ Voltage is at minimum limit.")
+        st.info("Voltage is at minimum limit.")
 
     elapsed_time = int(time.time() - st.session_state.start_time)
     if elapsed_time < 60:
-        st.write(f"⏱️ Elapsed Time: {elapsed_time} seconds")
+        st.write(f"Elapsed Time: {elapsed_time} seconds")
     else:
         minutes = elapsed_time // 60
         seconds = elapsed_time % 60
-        st.write(f"⏱️ Elapsed Time: {minutes} min {seconds} sec")
+        st.write(f"Elapsed Time: {minutes} min {seconds} sec")
 
 # ----------------- Plot Voltage Chart -----------------
 if not df.empty:
@@ -123,10 +131,10 @@ if not df.empty:
 # ----------------- CSV Export -----------------
 if not df.empty:
     csv = df.to_csv(index=False).encode()
-    st.download_button("📥 Download Data as CSV", csv, "voltage_log.csv", "text/csv")
+    st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
-if st.button("🔄 Reset"):
+if st.button("Reset"):
     st.session_state.voltage_data = []
     st.session_state.start_time = time.time()
 

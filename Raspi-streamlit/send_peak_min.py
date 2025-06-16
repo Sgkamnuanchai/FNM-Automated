@@ -27,18 +27,6 @@ try:
         time.sleep(0.2)
         ser.write(mn_msg.encode('utf-8'))
 
-        # print("Waiting for Arduino response...")
-        # start_time = time.time()
-        # while ser.in_waiting <= 0:
-        #     if time.time() - start_time > 2:
-        #         print("No response from Arduino.")
-        #         break
-        #     time.sleep(0.01)
-
-        # if ser.in_waiting > 0:
-        #     response = ser.readline().decode('utf-8').rstrip()
-        #     print(f"{response}")
-        
         print("Listening to simulation output from Arduino (press Ctrl+C to stop)...")
         print("-" * 40)
 
