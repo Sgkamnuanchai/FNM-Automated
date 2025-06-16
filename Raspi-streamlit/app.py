@@ -67,20 +67,15 @@ if st.button("Send to Arduino"):
             time.sleep(0.1)
             st.session_state.ser.write(f"Min:{minv:.2f}\n".encode())
             st.success("Sent to Arduino.")
+            st.session_state.start_time = time.time()
+            st.session_state.running = True
         except Exception as e:
             st.error(f"Failed to send: {e}")
     else:
         st.error("Serial not connected.")
 
-# ----------------- Control Buttons -----------------
-colA, colB = st.columns(2)
-with colA:
-    if st.button("🟢 Start"):
-        st.session_state.running = True
-        st.session_state.start_time = time.time()
-with colB:
-    if st.button("🟥 Stop"):
-        st.session_state.running = False
+if st.button("🟥 Stop"):
+    st.session_state.running = False
 
 # ----------------- Arduino Output -----------------
 st.subheader("Arduino Output")
