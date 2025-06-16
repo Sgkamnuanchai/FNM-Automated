@@ -4,12 +4,11 @@ import pandas as pd
 import altair as alt
 import serial
 import re
+from streamlit_autorefresh import st_autorefresh
 
-# ---- Auto Refresh ----
 st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
-st.experimental_data_editor = False
-st_autorefresh = st.experimental_singleton(lambda: st.autorefresh, name="st_autorefresh")
-st_autorefresh(interval=200, key="autorefresh")  # Refresh ทุก 200 ms
+st_autorefresh(interval=200, key="autorefresh")
+
 
 # ---- UI & Style ----
 st.markdown("""
