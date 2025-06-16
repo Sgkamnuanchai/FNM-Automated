@@ -9,7 +9,6 @@ import re
 try:
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1.0)
     time.sleep(2)
-    ser.reset_input_buffer()
     serial_ready = True
 except Exception as e:
     serial_ready = False
@@ -55,8 +54,6 @@ if "start_time" not in st.session_state:
     st.session_state.start_time = None
 if "started" not in st.session_state:
     st.session_state.started = False
-if "serial_lines" not in st.session_state:
-    st.session_state.serial_lines = []
 
 # ----------------- START Button -----------------
 if not st.session_state.started:
@@ -65,7 +62,6 @@ if not st.session_state.started:
         st.session_state.start_time = time.time()
         if serial_ready:
             try:
-                ser.reset_input_buffer()
                 ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
                 time.sleep(0.1)
                 ser.write(f"Min:{min_voltage:.2f}\n".encode())
@@ -75,22 +71,13 @@ if not st.session_state.started:
 
 # ----------------- Read Voltage from Arduino -----------------
 voltage = None
-direction = ""
-mode = ""
-
 try:
     if serial_ready:
         read_start = time.time()
-        while time.time() - read_start < 0.5:
-            if ser.in_waiting > 0:
-                line = ser.readline().decode('utf-8').rstrip()
-                st.write("==============test Raw=============")
-                st.write(f"RAW from Arduino: {line}")
-
-                if line:
-                    st.session_state.serial_lines.append(line)
-                    if len(st.session_state.serial_lines) > 50:
-                        st.session_state.serial_lines = st.session_state.serial_lines[-50:]
+        while time.time() - read_start < 2:
+            line = ser.readline().decode('utf-8', errors='ignore').strip()
+            if line:
+                st.write(f"Raw From Arduino: {line}")
 
                 match = re.search(r"VOLTAGE:\s*([0-9.]+)\s*\|\s*DIR:\s*(\w+)\s*\|\s*MODE:\s*(\w+)", line)
                 if match:
@@ -98,7 +85,7 @@ try:
                     direction = match.group(2)
                     mode = match.group(3)
 
-                    voltage = voltage_val  # for UI
+                    voltage = voltage_val
                     elapsed_time = int(time.time() - st.session_state.start_time)
 
                     st.session_state.voltage_data.append({
@@ -108,7 +95,7 @@ try:
                         "Mode": mode
                     })
             else:
-                time.sleep(0.01)
+                time.sleep(0.05)
 except Exception as e:
     st.error(f"Error reading from Arduino: {e}")
 
@@ -122,16 +109,17 @@ if not df.empty and "Seconds" in df.columns:
 
 # ----------------- Display Voltage -----------------
 if voltage is not None:
-    color = "#2E8B57" if mode == "Charging" else "#F44336"
+    color = "#2E8B57" if voltage < peak_voltage else "#F44336"
     st.markdown(
         f"<span style='font-size: 35px; color: {color}; font-weight: 600;'>Voltage (V): {voltage:.3f} V</span>",
         unsafe_allow_html=True
     )
-    st.write(f"Direction: {direction}")
-    st.write(f"Mode: {mode}")
 
-# ----------------- Display Elapsed Time -----------------
+# ----------------- Display State & Elapsed Time -----------------
 if voltage is not None:
+    last_entry = st.session_state.voltage_data[-1]
+    st.write(f"Direction: {last_entry['Direction']} | Mode: {last_entry['Mode']}")
+
     elapsed_time = int(time.time() - st.session_state.start_time)
     if elapsed_time < 60:
         st.write(f"Elapsed Time: {elapsed_time} seconds")
@@ -142,7 +130,6 @@ if voltage is not None:
 
 # ----------------- Plot Voltage Chart -----------------
 if not df.empty:
-    st.markdown("---")
     x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
     chart = alt.Chart(df).mark_line().encode(
         x=x_axis,
@@ -157,19 +144,10 @@ if not df.empty:
     st.download_button("Download Data as CSV", csv, "voltage_log.csv", "text/csv")
 
 # ----------------- Reset -----------------
-if not df.empty and st.button("Reset"):
+if st.button("Reset"):
     st.session_state.voltage_data = []
     st.session_state.start_time = time.time()
-    st.session_state.serial_lines = []
-
-# ----------------- Show Raw Serial Messages -----------------
-if st.session_state.serial_lines:
-    st.markdown("---")
-    st.markdown("### Raw Serial Output (from Arduino)")
-    for msg in reversed(st.session_state.serial_lines):
-        st.text(msg)
 
 # ----------------- Refresh -----------------
-if voltage is not None:
-    time.sleep(1)
-    st.rerun()
+time.sleep(1)
+st.rerun()
