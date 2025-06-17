@@ -22,4 +22,4 @@ Designed for laboratory setups or research on supercapacitive electrolyzers, ena
 
 ## HOW TO RUN THIS APP :
 - pip install -r requirements.txt
-- streamlit run ./Raspi-streamlit/app.py
+- streamlit run ./Raspi-streamlit/mockup-app.py
