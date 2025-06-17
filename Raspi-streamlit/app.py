@@ -54,6 +54,16 @@ if "ser" not in st.session_state:
 #             st.error(f"Failed to send: {e}")
 # ---- Send to Arduino ----
 if st.button("Send to Arduino"):
+    if not st.session_state.ser:
+        try:
+            st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+            time.sleep(2)
+            st.session_state.ser.reset_input_buffer()
+            st.success("Serial connected.")
+        except Exception as e:
+            st.session_state.ser = None
+            st.error(f"Serial connection failed: {e}")
+
     if st.session_state.ser:
         try:
             st.session_state.voltage = min_voltage
@@ -165,6 +175,14 @@ else:
 #         st.session_state.running = False
 # ---- Control Button ----
 if st.button("Stop"):
+    if st.session_state.ser:
+        try:
+            st.session_state.ser.write(b"STOP\n")
+            st.session_state.ser.close()
+            st.session_state.ser = None
+            st.success("Serial connection closed.")
+        except Exception as e:
+            st.error(f"Error while closing serial: {e}")
     st.session_state.running = False
 
 # ---- Elapsed Time ----
