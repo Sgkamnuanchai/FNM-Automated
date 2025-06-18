@@ -200,11 +200,17 @@ df = pd.DataFrame(st.session_state.data)
 if not df.empty:
     df["Minutes"] = df["Seconds"] / 60
     x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
-    chart = alt.Chart(df).mark_line().encode(
-        x=x_axis,
-        y=alt.Y("Voltage", title="Voltage (V)"),
-        color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
-    ).properties(width=700, height=400)
+    ### 2 line chart ###
+    # chart = alt.Chart(df).mark_line().encode(
+    #     x=x_axis,
+    #     y=alt.Y("Voltage", title="Voltage (V)"),
+    #     color=alt.Color("State", scale=alt.Scale(domain=["Charging", "Discharging"], range=["green", "red"]))
+    # ).properties(width=700, height=400)
+
+    chart = alt.Chart(df).mark_line(color="green").encode(
+    x=x_axis,
+    y=alt.Y("Voltage", title="Voltage (V)")).properties(width=700, height=400)
+
     st.altair_chart(chart, use_container_width=True)
     csv = df.to_csv(index=False).encode()
     st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
