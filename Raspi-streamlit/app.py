@@ -25,9 +25,9 @@ st.markdown("""
 # ---- Input ----
 col1, col2 = st.columns(2)
 with col1:
-    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 2.0, 1.0, 0.1)
+    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 5.0, 1.0, 0.1)
 with col2:
-    peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 3.0, 1.8, 0.1)
+    peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 1.8, 0.1)
 
 # ---- Serial ----
 if "ser" not in st.session_state:
