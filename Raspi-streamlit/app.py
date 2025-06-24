@@ -37,7 +37,7 @@ with col2:
 # ---- Serial ----
 if "ser" not in st.session_state:
     try:
-        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+        st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
         st.success("Serial connected.")
