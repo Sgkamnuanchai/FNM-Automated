@@ -25,9 +25,9 @@ st.markdown("""
 # ---- Input ----
 col1, col2 = st.columns(2)
 with col1:
-    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 5.0, 1.0, 0.1)
+    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 5.0, 0.0, 0.1)
 with col2:
-    peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 1.8, 0.1)
+    peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
 
 # ----- input time -----
 with st.container():
@@ -89,6 +89,7 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
             time.sleep(0.05)
             discharge_milli_seconds = int(discharge_minutes * 60 * 1000)
             st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
+            time.sleep(0.05)
             print(f"Peak:{peak_voltage:.2f}")
             print(f"Min:{min_voltage:.2f}")
             print(f"Time:{discharge_milli_seconds}")
