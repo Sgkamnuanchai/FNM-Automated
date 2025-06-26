@@ -37,7 +37,7 @@ with st.container():
 # ---- Serial ----
 if "ser" not in st.session_state:
     try:
-        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+        st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
         st.success("Serial connected.")
@@ -66,7 +66,7 @@ if "sent" not in st.session_state:
 if st.button("Send to Arduino", disabled=st.session_state.sent):
     if not st.session_state.ser:
         try:
-            st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+            st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
             time.sleep(2)
             st.session_state.ser.reset_input_buffer()
             st.success("Serial connected.")
