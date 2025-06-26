@@ -37,7 +37,7 @@ with col2:
 # ---- Serial ----
 if "ser" not in st.session_state:
     try:
-        st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
+        st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
         st.success("Serial connected.")
@@ -58,7 +58,12 @@ if "ser" not in st.session_state:
 #         except Exception as e:
 #             st.error(f"Failed to send: {e}")
 # ---- Send to Arduino ----
-if st.button("Send to Arduino"):
+
+if "sent" not in st.session_state:
+    st.session_state.sent = False
+
+# if st.button("Send to Arduino"):
+if st.button("Send to Arduino", disabled=st.session_state.sent):
     if not st.session_state.ser:
         try:
             st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
@@ -76,6 +81,7 @@ if st.button("Send to Arduino"):
             st.session_state.data = []
             st.session_state.start_time = time.time()
             st.session_state.running = True
+            st.session_state.sent = True
             # -------------------------------------
             st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode())
             time.sleep(0.05)
@@ -195,7 +201,7 @@ if st.button("Stop"):
         except Exception as e:
             st.error(f"Error while closing serial: {e}")
     st.session_state.running = False
-
+    st.session_state.sent = False
 # ---- Elapsed Time ----
 if st.session_state.running:
     elapsed_time = int(time.time() - st.session_state.start_time)
