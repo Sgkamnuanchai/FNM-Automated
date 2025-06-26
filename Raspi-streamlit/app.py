@@ -30,8 +30,8 @@ with col2:
     peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 1.8, 0.1)
 
 # ----- input time -----
-# with st.container():
-#     discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
+with st.container():
+    discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 
 # ---- Serial ----
@@ -87,11 +87,11 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
             time.sleep(0.05)
             st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
             time.sleep(0.05)
-            # discharge_milli_seconds = int(discharge_minutes * 60 * 1000)
-            # st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
+            discharge_milli_seconds = int(discharge_minutes * 60 * 1000)
+            st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
             print(f"Peak:{peak_voltage:.2f}")
             print(f"Min:{min_voltage:.2f}")
-            # print(f"Time:{discharge_milli_seconds}")
+            print(f"Time:{discharge_milli_seconds}")
             st.success("Sent to Arduino and RESET all states.")
         except Exception as e:
             st.error(f"Failed to send: {e}")
