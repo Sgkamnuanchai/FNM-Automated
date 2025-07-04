@@ -140,9 +140,23 @@ if st.session_state.running and st.session_state.ser:
 # )
 # ---- Display Voltage + State ----
 if st.session_state.data:
-    color = "#2E8B57" if st.session_state.charging else "#F44336"
-    state_text = "Charging" if st.session_state.charging else "Discharging"
-    state_color = "#0099FF" if st.session_state.charging else "#F44336"
+    latest_state = st.session_state.data[-1]["State"]
+    if latest_state == "Stop":
+        state_text = "Stop"
+        state_color = "#FFFFFF"
+        color = "#888888"
+    elif latest_state == "Charging":
+        state_text = "Charging"
+        state_color = "#0099FF"
+        color = "#2E8B57"
+    elif latest_state == "Discharging":
+        state_text = "Discharging"
+        state_color = "#F44336"
+        color = "#F44336"
+    else:
+        state_text = latest_state
+        state_color = "#888888"
+        color = "#888888"
 
     st.markdown(
         f"""
@@ -150,7 +164,7 @@ if st.session_state.data:
             <span style='font-size: 35px; color: {color}; font-weight: 600;'>
                 Voltage (V): {st.session_state.voltage:.3f} V
             </span>
-            <span style='font-size: 28px; color: {state_color}; font-weight: 600;'>
+            <span style='font-size: 28px; color: {state_color}; font-weight: 600; background-color:#222; padding:4px 16px; border-radius:12px;'>
                 [{state_text}]
             </span>
         </div>
@@ -162,6 +176,31 @@ else:
         "<span style='font-size: 20px; color: #888;'>Waiting for Arduino data...</span>",
         unsafe_allow_html=True
     )
+
+# if st.session_state.data:
+#     color = "#2E8B57" if st.session_state.charging else "#F44336"
+#     state_text = "Charging" if st.session_state.charging else "Discharging"
+#     state_color = "#0099FF" if st.session_state.charging else "#F44336"
+
+#     st.markdown(
+#         f"""
+#         <div style='display:flex;align-items:center;gap:20px;'>
+#             <span style='font-size: 35px; color: {color}; font-weight: 600;'>
+#                 Voltage (V): {st.session_state.voltage:.3f} V
+#             </span>
+#             <span style='font-size: 28px; color: {state_color}; font-weight: 600;'>
+#                 [{state_text}]
+#             </span>
+#         </div>
+#         """,
+#         unsafe_allow_html=True
+#     )
+# else:
+#     st.markdown(
+#         "<span style='font-size: 20px; color: #888;'>Waiting for Arduino data...</span>",
+#         unsafe_allow_html=True
+#     )
+
 # color = "#2E8B57" if st.session_state.charging else "#F44336"
 # state_text = "Charging" if st.session_state.charging else "Discharging"
 # state_color = "#0099FF" if st.session_state.charging else "#F44336"
