@@ -38,6 +38,7 @@ with st.container():
 if "ser" not in st.session_state:
     try:
         st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+        # st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
         time.sleep(2)
         st.session_state.ser.reset_input_buffer()
         st.success("Serial connected.")
@@ -67,6 +68,7 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
     if not st.session_state.ser:
         try:
             st.session_state.ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
+            # st.session_state.ser = serial.Serial('/dev/ttyACM1', 115200, timeout=0.1)
             time.sleep(2)
             st.session_state.ser.reset_input_buffer()
             st.success("Serial connected.")
@@ -204,14 +206,31 @@ if st.button("Stop"):
     st.session_state.running = False
     st.session_state.sent = False
 # ---- Elapsed Time ----
+# if st.session_state.running:
+#     elapsed_time = int(time.time() - st.session_state.start_time)
+# else:
+#     elapsed_time = st.session_state.data[-1]["Seconds"] if st.session_state.data else 0
+# if elapsed_time < 60:
+#     st.write(f"Elapsed Time: {elapsed_time} seconds")
+# else:
+#     st.write(f"Elapsed Time: {elapsed_time // 60} min {elapsed_time % 60} sec")
+
+def format_time(seconds):
+    days = seconds // 86400
+    seconds = seconds % 86400
+    hours = seconds // 3600
+    seconds = seconds % 3600
+    minutes = seconds // 60
+    seconds = seconds % 60
+    return f"{days} day {hours} hrs {minutes} min {seconds} sec"
+
 if st.session_state.running:
     elapsed_time = int(time.time() - st.session_state.start_time)
 else:
     elapsed_time = st.session_state.data[-1]["Seconds"] if st.session_state.data else 0
-if elapsed_time < 60:
-    st.write(f"Elapsed Time: {elapsed_time} seconds")
-else:
-    st.write(f"Elapsed Time: {elapsed_time // 60} min {elapsed_time % 60} sec")
+
+st.write(f"Elapsed Time: {format_time(elapsed_time)}")
+
 
 # ---- Chart ----
 df = pd.DataFrame(st.session_state.data)
