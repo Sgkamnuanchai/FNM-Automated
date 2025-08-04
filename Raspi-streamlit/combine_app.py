@@ -116,61 +116,79 @@ if st.session_state.running and st.session_state.ser:
                 if match:
                     voltage = float(match.group(1))
                     mode_label = match.group(3)
-
-                    # Always update these for display
                     st.session_state.voltage = voltage
                     st.session_state.charging = (mode_label == "Charging")
-
-                    # Log data only if in Decoupled mode
-                    if mode == "Decoupled":
-                        elapsed = int(time.time() - st.session_state.start_time)
-                        st.session_state.data.append({
-                            "Seconds": elapsed,
-                            "Voltage": voltage,
-                            "State": mode_label
-                        })
+                    elapsed = int(time.time() - st.session_state.start_time)
+                    st.session_state.data.append({
+                        "Seconds": elapsed,
+                        "Voltage": voltage,
+                        "State": mode_label
+                    })
     except Exception as e:
         st.error(f"Error reading serial: {e}")
 
-
-# ---- Display Voltage ----
-if st.session_state.data:
-    latest_state = st.session_state.data[-1]["State"]
-    if latest_state == "Stop":
-        state_text = "Stop"
-        state_color = "#FFFFFF"
-        color = "#888888"
-    elif latest_state == "Charging":
-        state_text = "Charging"
-        state_color = "#0099FF"
-        color = "#2E8B57"
-    elif latest_state == "Discharging":
-        state_text = "Discharging"
-        state_color = "#F44336"
-        color = "#F44336"
-    else:
-        state_text = latest_state
+# ---- Display Voltage / State ----
+if st.session_state.data or mode == "CDI":
+    if mode == "CDI" and st.session_state.running:
+        state_text = "Unknown"
         state_color = "#888888"
         color = "#888888"
+        if st.session_state.charging:
+            state_text = "Charging"
+            state_color = "#0099FF"
+        else:
+            # ถ้าไม่ได้ charging ก็ถือว่า Discharging (หรือ Stop ถ้าอยากกำหนดเอง)
+            state_text = "Discharging"
+            state_color = "#F44336"
 
-    st.markdown(
-        f"""
-        <div style='display:flex;align-items:center;gap:20px;'>
-            <span style='font-size: 35px; color: {color}; font-weight: 600;'>
-                Voltage (V): {st.session_state.voltage:.3f} V
-            </span>
-            <span style='font-size: 28px; color: {state_color}; font-weight: 600; background-color:#222; padding:4px 16px; border-radius:12px;'>
-                [{state_text}]
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        st.markdown(
+            f"""
+            <div style='display:flex;align-items:center;justify-content:center;'>
+                <span style='font-size: 32px; color: {state_color}; font-weight: 600; background-color:#222; padding:6px 20px; border-radius:12px;'>
+                    [{state_text}]
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    elif st.session_state.data:
+        latest_state = st.session_state.data[-1]["State"]
+        if latest_state == "Stop":
+            state_text = "Stop"
+            state_color = "#FFFFFF"
+            color = "#888888"
+        elif latest_state == "Charging":
+            state_text = "Charging"
+            state_color = "#0099FF"
+            color = "#2E8B57"
+        elif latest_state == "Discharging":
+            state_text = "Discharging"
+            state_color = "#F44336"
+            color = "#F44336"
+        else:
+            state_text = latest_state
+            state_color = "#888888"
+            color = "#888888"
+
+        st.markdown(
+            f"""
+            <div style='display:flex;align-items:center;gap:20px;'>
+                <span style='font-size: 35px; color: {color}; font-weight: 600;'>
+                    Voltage (V): {st.session_state.voltage:.3f} V
+                </span>
+                <span style='font-size: 28px; color: {state_color}; font-weight: 600; background-color:#222; padding:4px 16px; border-radius:12px;'>
+                    [{state_text}]
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 else:
     st.markdown(
         "<span style='font-size: 20px; color: #888;'>Waiting for Arduino data...</span>",
         unsafe_allow_html=True
     )
+
 
 # ---- Stop Button ----
 if st.button("Stop"):
