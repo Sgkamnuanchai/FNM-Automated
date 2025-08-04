@@ -17,7 +17,7 @@ st.markdown("""
     .subtitle { text-align: center; color: #444; font-size: 18px; margin-top: -10px; }
     </style>
     <div class='title'>FNM Team</div>
-    <div class='subtitle'Dashboard</div>
+    <div class='subtitle'>Dashboard</div>
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
