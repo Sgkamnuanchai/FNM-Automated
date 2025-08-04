@@ -137,7 +137,6 @@ if st.session_state.data or mode == "CDI":
             state_text = "Charging"
             state_color = "#0099FF"
         else:
-            # ถ้าไม่ได้ charging ก็ถือว่า Discharging (หรือ Stop ถ้าอยากกำหนดเอง)
             state_text = "Discharging"
             state_color = "#F44336"
 
