@@ -17,12 +17,12 @@ st.markdown("""
     .subtitle { text-align: center; color: #444; font-size: 18px; margin-top: -10px; }
     </style>
     <div class='title'>FNM Team</div>
-    <div class='subtitle'>Supercapacitive Electrolyzer Dashboard</div>
+    <div class='subtitle'Dashboard</div>
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
 # ---- Mode Selection ----
-mode = st.radio("Select Mode", ["Decoupled", "CDI"], horizontal=True)
+mode = st.radio("Select Project", ["Decoupled", "CDI"], horizontal=True)
 
 # ---- Input ----
 if mode == "Decoupled":
