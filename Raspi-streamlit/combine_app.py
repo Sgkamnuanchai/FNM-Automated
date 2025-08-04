@@ -21,19 +21,23 @@ st.markdown("""
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
-# ---- Input ----
-col1, col2 = st.columns(2)
-with col1:
-    min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 5.0, 0.0, 0.1)
-with col2:
-    peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
-
-# ----- input time -----
-with st.container():
-    discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
-
 # ---- Mode Selection ----
 mode = st.radio("Select Mode", ["Decoupled", "CDI"], horizontal=True)
+
+# ---- Input ----
+if mode == "Decoupled":
+    col1, col2 = st.columns(2)
+    with col1:
+        min_voltage = st.number_input("Set Minimum Voltage (V)", 0.0, 5.0, 0.0, 0.1)
+    with col2:
+        peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
+else:
+    # Default placeholders when not used
+    min_voltage = 0.0
+    peak_voltage = 0.0
+
+# ----- input time -----
+discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 # ---- Serial ----
 if "ser" not in st.session_state:
@@ -77,18 +81,11 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
                 time.sleep(0.05)
                 st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode())
                 time.sleep(0.05)
-                st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
-                st.success("Sent Decoupled parameters to Arduino.")
-            elif mode == "CDI":
-                st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
-                time.sleep(0.05)
-                st.success("Sent CDI time only to Arduino.")
 
-            print(f"Mode: {mode}")
-            print(f"Time:{discharge_milli_seconds}")
-            if mode == "Decoupled":
-                print(f"Peak:{peak_voltage:.2f}")
-                print(f"Min:{min_voltage:.2f}")
+            st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
+            time.sleep(0.05)
+
+            st.success(f"Sent to Arduino in {mode} mode.")
         except Exception as e:
             st.error(f"Failed to send: {e}")
 
