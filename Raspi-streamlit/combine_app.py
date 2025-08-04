@@ -6,7 +6,7 @@ import serial
 import re
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
+st.set_page_config(page_title="FNM Dashboard", layout="centered")
 st_autorefresh(interval=400, key="autorefresh")
 
 # ---- UI & Style ----
@@ -23,7 +23,7 @@ st.markdown("""
     }
     </style>
     <div class='title'>FNM Team</div>
-    <div class='subtitle'>Supercapacitive Electrolyzer Dashboard</div>
+    <div class='subtitle'>Dashboard</div>
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
