@@ -6,7 +6,7 @@ import serial
 import re
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="FNM Dashboard", layout="centered")
+st.set_page_config(page_title="FNM Team Dashboard", layout="centered")
 st_autorefresh(interval=400, key="autorefresh")
 
 # ---- UI & Style ----
@@ -28,7 +28,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---- Mode Selection ----
-mode = st.radio("🔌 Select Operating Mode", ["Decoupled", "CDI"])
+mode = st.radio("Select Project", ["Decoupled", "CDI"], horizontal=True)
 
 # ---- Input ----
 if mode == "Decoupled":
@@ -41,6 +41,7 @@ else:
     min_voltage = 0.0
     peak_voltage = 0.0
 
+# ----- input time -----
 discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 # ---- Serial ----
