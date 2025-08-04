@@ -6,7 +6,7 @@ import serial
 import re
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="FNM Team Dashboard", layout="centered")
+st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
 st_autorefresh(interval=400, key="autorefresh")
 
 # ---- UI & Style ----
@@ -15,14 +15,20 @@ st.markdown("""
     body { background-color: #f5fff5; }
     .title { text-align: center; color: #2E8B57; font-size: 36px; font-weight: bold; }
     .subtitle { text-align: center; color: #444; font-size: 18px; margin-top: -10px; }
+
+    div.row-widget.stRadio > div {
+        flex-direction: row;
+        justify-content: center;
+        gap: 30px;
+    }
     </style>
     <div class='title'>FNM Team</div>
-    <div class='subtitle'>Dashboard</div>
+    <div class='subtitle'>Supercapacitive Electrolyzer Dashboard</div>
     <hr style="margin-top:10px;"/>
 """, unsafe_allow_html=True)
 
 # ---- Mode Selection ----
-mode = st.radio("Select Project", ["Decoupled", "CDI"], horizontal=True)
+mode = st.radio("🔌 Select Operating Mode", ["Decoupled", "CDI"])
 
 # ---- Input ----
 if mode == "Decoupled":
@@ -32,11 +38,9 @@ if mode == "Decoupled":
     with col2:
         peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
 else:
-    # Default placeholders when not used
     min_voltage = 0.0
     peak_voltage = 0.0
 
-# ----- input time -----
 discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 # ---- Serial ----
@@ -191,9 +195,10 @@ else:
 
 st.write(f"Elapsed Time: {format_time(elapsed_time)}")
 
-# ---- Chart ----
+# ---- Chart (Only in Decoupled) ----
 df = pd.DataFrame(st.session_state.data)
-if not df.empty:
+
+if mode == "Decoupled" and not df.empty:
     df["Minutes"] = df["Seconds"] / 60
     x_axis = alt.X("Minutes", title="Time (min)") if df["Seconds"].max() > 60 else alt.X("Seconds", title="Time (s)")
 
@@ -206,3 +211,6 @@ if not df.empty:
 
     csv = df.to_csv(index=False).encode()
     st.download_button("Download CSV", csv, "voltage_log.csv", "text/csv")
+
+elif mode == "CDI":
+    st.info("CDI mode active — voltage chart is not shown.")
