@@ -116,16 +116,22 @@ if st.session_state.running and st.session_state.ser:
                 if match:
                     voltage = float(match.group(1))
                     mode_label = match.group(3)
+
+                    # Always update these for display
                     st.session_state.voltage = voltage
                     st.session_state.charging = (mode_label == "Charging")
-                    elapsed = int(time.time() - st.session_state.start_time)
-                    st.session_state.data.append({
-                        "Seconds": elapsed,
-                        "Voltage": voltage,
-                        "State": mode_label
-                    })
+
+                    # Log data only if in Decoupled mode
+                    if mode == "Decoupled":
+                        elapsed = int(time.time() - st.session_state.start_time)
+                        st.session_state.data.append({
+                            "Seconds": elapsed,
+                            "Voltage": voltage,
+                            "State": mode_label
+                        })
     except Exception as e:
         st.error(f"Error reading serial: {e}")
+
 
 # ---- Display Voltage ----
 if st.session_state.data:
