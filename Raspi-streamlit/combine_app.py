@@ -6,7 +6,7 @@ import serial
 import re
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="Electrolyzer Dashboard", layout="centered")
+st.set_page_config(page_title="FNM Team Dashboard", layout="centered")
 st_autorefresh(interval=400, key="autorefresh")
 
 # ---- UI & Style ----
