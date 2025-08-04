@@ -15,12 +15,6 @@ st.markdown("""
     body { background-color: #f5fff5; }
     .title { text-align: center; color: #2E8B57; font-size: 36px; font-weight: bold; }
     .subtitle { text-align: center; color: #444; font-size: 18px; margin-top: -10px; }
-
-    div.row-widget.stRadio > div {
-        flex-direction: row;
-        justify-content: center;
-        gap: 30px;
-    }
     </style>
     <div class='title'>FNM Team</div>
     <div class='subtitle'>Supercapacitive Electrolyzer Dashboard</div>
@@ -28,7 +22,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---- Mode Selection ----
-mode = st.radio("Select Project", ["Decoupled", "CDI"])
+mode = st.radio("Select Mode", ["Decoupled", "CDI"], horizontal=True)
 
 # ---- Input ----
 if mode == "Decoupled":
@@ -38,9 +32,11 @@ if mode == "Decoupled":
     with col2:
         peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
 else:
+    # Default placeholders when not used
     min_voltage = 0.0
     peak_voltage = 0.0
 
+# ----- input time -----
 discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 # ---- Serial ----
