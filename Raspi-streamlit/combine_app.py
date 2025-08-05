@@ -92,7 +92,9 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
 
             st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode())
             time.sleep(0.05)
-
+            print(f"Peak:{peak_voltage:.2f}")
+            print(f"Min:{min_voltage:.2f}")
+            print(f"Time:{discharge_milli_seconds}")
             st.success(f"Sent to Arduino in {mode} mode.")
         except Exception as e:
             st.error(f"Failed to send: {e}")
