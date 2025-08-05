@@ -42,7 +42,10 @@ else:
     peak_voltage = 0.0
 
 # ----- input time -----
-discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
+if mode == "Decoupled":
+    discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
+else:
+    discharge_minutes = st.number_input("Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
 # ---- Serial ----
 if "ser" not in st.session_state:
