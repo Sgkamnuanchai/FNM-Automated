@@ -27,7 +27,7 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 
 ## Sample Interface :
 ### Decoupled Project
-![App Screenshot](assets/decoupled_cap.jpg)
+![Demo](assets/decoupled.gif)
 
 ### CDI Project
 ![App Screenshot](assets/cdi_cap.jpg)
