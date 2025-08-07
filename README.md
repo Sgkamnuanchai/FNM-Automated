@@ -26,8 +26,8 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 - streamlit run ./Raspi-streamlit/combine_app.py
 
 ## Sample Interface :
-### Decoupled
+### Decoupled Project
 ![App Screenshot](assets/decoupled_cap.jpg)
 
-### CDI
+### CDI Project
 ![App Screenshot](assets/cdi_cap.jpg)
