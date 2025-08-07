@@ -21,7 +21,7 @@ All data is logged and can be downloaded for further analysis.
 Designed for laboratory setups or research on Decoupled and CDI project, enabling easy monitoring, control, and data collection via web dashboard.
 
 ## HOW TO RUN THIS APP :
-- Connect raspi with username : fnmlab , password : fnm@123
+- Connect Raspberrypi with username : fnmlab , password : fnm@123
 - pip install -r requirements.txt
 - streamlit run ./Raspi-streamlit/combine_app.py
 
