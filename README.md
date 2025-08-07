@@ -7,8 +7,6 @@ All data is logged and can be downloaded for further analysis.
 
 - Set minimum and peak voltage via user interface
 
-- Start/stop the electrolyzer and reset experiment with a single click
-
 - Real-time communication and control with Arduino via USB serial
 
 - Displays current voltage and system state (charging/discharging)
