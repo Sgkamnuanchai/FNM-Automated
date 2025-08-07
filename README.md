@@ -24,3 +24,10 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 - Connect raspi with username : fnmlab , password : fnm@123
 - pip install -r requirements.txt
 - streamlit run ./Raspi-streamlit/combine_app.py
+
+## Sample Interface :
+### Decoupled
+![App Screenshot](assets/decoupled_cap.jpg)
+
+### CDI
+![App Screenshot](assets/cdi_cap.jpg)
