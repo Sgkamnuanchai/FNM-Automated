@@ -36,4 +36,3 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 
 ### Custom Time
 ![App Screenshot](assets/custom.PNG)
-https://github.com/Sgkamnuanchai/FNM-Automated
