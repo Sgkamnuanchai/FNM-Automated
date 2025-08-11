@@ -87,7 +87,7 @@ if "running" not in st.session_state:
 if st.session_state.ser is None:
     st.session_state.ser = open_first_acm()
     if st.session_state.ser is None:
-        st.error("Serial connection failed: no /dev/ttyACM found (and no ACM ports in system).")
+        st.error("Serial connection failed: no /dev/ttyACM0–9 found (and no ACM ports in system).")
 
 # =============================
 # Mode Selection & Inputs
@@ -297,4 +297,4 @@ elif mode == "CDI":
     st.info("CDI mode active — voltage chart is not shown.")
 
 elif mode == "Custom":
-    st.info("Custom mode active — voltage chart is not shown.")
+    st.info("custom mode active — voltage chart is not shown.")
