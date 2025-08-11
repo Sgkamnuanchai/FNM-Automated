@@ -21,6 +21,7 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 ## HOW TO RUN THIS APP :
 - Connect Raspberrypi with username : fnmlab , password : fnm@123 and Open timinal
 - source ./fnm_env/bin/activate
+- cd Desktop/FNM-Automated/Raspi-streamlit/
 - streamlit run ./Raspi-streamlit/combine_app.py
 
 ### Kill process streamlit
