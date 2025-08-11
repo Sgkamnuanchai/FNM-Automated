@@ -22,7 +22,7 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 - Connect Raspberrypi with username : fnmlab , password : fnm@123 and Open timinal
 - source ./fnm_env/bin/activate
 - cd Desktop/FNM-Automated/Raspi-streamlit/
-- streamlit run ./Raspi-streamlit/combine_app.py
+- streamlit run combine_app.py
 
 ### Kill process streamlit
 - pkill -f streamlit
@@ -36,3 +36,4 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 
 ### Custom Time
 ![App Screenshot](assets/custom.PNG)
+https://github.com/Sgkamnuanchai/FNM-Automated
