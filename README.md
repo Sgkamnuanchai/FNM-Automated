@@ -29,3 +29,6 @@ Designed for laboratory setups or research on Decoupled and CDI project, enablin
 
 ### CDI Project
 ![App Screenshot](assets/cdi_cap.jpg)
+
+### CDI Project
+![App Screenshot](assets/custom.PNG)
