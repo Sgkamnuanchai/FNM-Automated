@@ -21,11 +21,6 @@ All data is logged and can be downloaded for further analysis.
 
 ---
 
-## Typical Use Case
-Designed for laboratory setups or research on Decoupled and CDI project, enabling easy monitoring, control, and data collection via web dashboard.
-
----
-
 ## How to Run this App
 
 ```bash
