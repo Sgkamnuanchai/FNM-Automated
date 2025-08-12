@@ -3,6 +3,8 @@ A real-time dashboard for controlling and monitoring a Decoupled and CDI experim
 Built with Streamlit and Arduino, the app enables users to set minimum and peak voltage parameters, start/stop the process, and visualize real-time voltage data as well as operational states (charging/discharging).
 All data is logged and can be downloaded for further analysis.
 
+## Sonakul kamnuanchai , Varawut Kornsiriluk
+
 ## Features:
 
 - Set minimum and peak voltage via user interface
