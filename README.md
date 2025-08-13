@@ -39,7 +39,7 @@ cd Desktop/FNM-Automated/Raspi-streamlit/
 streamlit run combine_app.py
 ```
 
-# Kill process streamlit
+## Kill process streamlit
 ```bash
 pkill -f streamlit
 ```
