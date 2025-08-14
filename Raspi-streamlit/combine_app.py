@@ -39,6 +39,8 @@ if mode == "Decoupled":
         peak_voltage = st.number_input("Set Peak Voltage (V)", 0.0, 5.0, 2.0, 0.1)
     discharge_minutes = st.number_input("Discharge Time (minutes)", min_value=0.0, value=2.0, step=0.1)
 
+    stop_minutes = st.number_input("Stop Time (minutes)", min_value=0.0, value=0.0, step=0.1)
+
 elif mode == "CDI":
     min_voltage = 0.0
     peak_voltage = 0.0
@@ -91,12 +93,15 @@ if st.button("Send to Arduino", disabled=st.session_state.sent):
 
             if mode == "Decoupled":
                 discharge_milli_seconds = int(discharge_minutes * 60 * 1000)
+                stop_ms = int(stop_minutes * 60 * 1000)
                 st.session_state.ser.write(f"Peak:{peak_voltage:.2f}\n".encode()); time.sleep(0.05)
                 st.session_state.ser.write(f"Min:{min_voltage:.2f}\n".encode());  time.sleep(0.05)
                 st.session_state.ser.write(f"Time:{discharge_milli_seconds}\n".encode()); time.sleep(0.05)
+                st.session_state.ser.write(f"stop:{stop_ms}\n".encode()); time.sleep(0.05)
                 print(f"Peak:{peak_voltage:.2f}")
                 print(f"Min:{min_voltage:.2f}")
                 print(f"Time:{discharge_milli_seconds}")
+                print(f"stop:{stop_ms}")
 
             elif mode == "CDI":
                 discharge_milli_seconds = int(discharge_minutes * 60 * 1000)
